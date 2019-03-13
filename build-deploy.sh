@@ -81,6 +81,7 @@ cat > $hooks_path <<EOF
         echo '无法执行deploy.sh，因为该文件没有可执行权限'
     fi
  fi
+ echo '生产环境更新完毕'
 EOF
 echo "创建钩子于 ${hooks_path}"
 chown $user:$group $hooks_path # 修改钩子的所属用户
