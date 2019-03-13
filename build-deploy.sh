@@ -14,7 +14,7 @@ user="www"
 group="www"
 origin="origin" # 部署的生产环境使用的origin
 branch="master" # 部署的生产环境使用的分支
-middle_store_path="/www/middle_store" # 裸仓库根目录
+middle_store_path=$(cd `dirname $0`; pwd)# 裸仓库根目录
 produce_store_root_path="/www/wwwroot" # 生产环境根目录
 
 # 接受参数
@@ -80,7 +80,12 @@ cat > $hooks_path <<EOF
  deploy_shell_path="${produce_store_path}/deploy.sh"
  if [ -d $deploy_shell_path ]
  then
- echo $deploy_shell_path
+    if [ -x $deploy_shell_path ]
+    then
+        echo $deploy_shell_path
+    else
+        echo '无法执行deploy.sh，因为该文件没有可执行权限'
+    fi
  fi
 EOF
 
