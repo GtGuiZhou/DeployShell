@@ -17,6 +17,7 @@ branch="master" # 部署的生产环境使用的分支
 middle_store_root_path=$(dirname $(pwd)) # 裸仓库根目录
 produce_store_root_path="/www/wwwroot" # 生产环境根目录
 
+
 # 接受参数
 while getopts ":o:b:" opt
 do
@@ -28,8 +29,7 @@ do
     esac
 done
 
-# 输入项目名称
-item_path=""
+
 while :
 do
 read -p "请输入项目名称,会自动添加.git结尾,输入exit可以退出：" item_name
@@ -37,44 +37,39 @@ if [ "${item_name}"x == "exit"x ]
 then
 	exit 0
 fi
-item_path="/www/${middle_store_path}/${item_name}.git"
-if [ -d $item_path ]
+cd $middle_store_root_path
+if [ -d "${item_name}.git" ]
  then
-	echo "该项目已经存在"
+    read -p "该项目已经存在，是否删除原有文件夹在进行创建？y/n：" input
+    if [ "${input}"x == "y"x ]
+    then
+        rm -rf "${item_name}.git"
+        break
+    fi
  else
 	break
 fi
 done
 
-# 生产环境目录
-produce_store_path="${produce_store_root_path}/${item_name}"
 
 echo "创建裸仓库中..."
 cd $middle_store_root_path
 git init --bare "${item_name}.git"
-chown $user:$group -R $item_path # 修改裸仓库的所属用户
-hooks_dir_path="${middle_store_root_path}/${item_name}.git"
+chown $user:$group -R "${item_name}.git" # 修改裸仓库的所属用户
 
 echo "克隆生产仓库..."
-middle_store_path="${middle_store_root_path}/${item_name}.git"
 cd $produce_store_root_path
-git clone $middle_store_path 
-chown $user:$group -R $produce_store_path # 修改生产环境的所属用户
-
-
-hooks_path="${hooks_dir_path}/post-receive"
-echo "创建钩子于 ${hooks_path}"
-touch $hooks_path
-
-chown $user:$group $hooks_path # 修改钩子的所属用户
-chmod u+x $hooks_path # 让钩子可以被执行
+git clone "${middle_store_root_path}/${item_name}.git" 
+chown $user:$group -R $item_name # 修改生产环境的所属用户
 
 echo "写入自动化部署hook内容"
+produce_store_path="${produce_store_root_path}/${item_name}"
+hooks_path="${middle_store_root_path}/${item_name}.git/hooks/post-receive" 
 cat > $hooks_path <<EOF
  # 该环境变量会影响部分git命令的执行
  unset GIT_DIR
  cd $produce_store_path
- git fetch $origin $branch
+ git pull $origin $branch
  # 执行部署脚本
  deploy_shell_path="${produce_store_path}/deploy.sh"
  if [ -d $deploy_shell_path ]
@@ -87,6 +82,9 @@ cat > $hooks_path <<EOF
     fi
  fi
 EOF
+echo "创建钩子于 ${hooks_path}"
+chown $user:$group $hooks_path # 修改钩子的所属用户
+chmod u+x $hooks_path # 让钩子可以被执行
 
 echo "自动化部署仓库创建完毕"
 exit 0
