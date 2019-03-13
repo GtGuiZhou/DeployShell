@@ -9,46 +9,63 @@
 
 # 该环境变量会影响部分git命令的执行
 unset GIT_DIR
- # 建立仓库和生产环境时，将他们的权限更改为该用户和分组
+ # 建立仓库和生产仓库时，将他们的权限更改为该用户和分组
 user="www" 
 group="www"
-origin="origin" # 部署的生产环境使用的origin
-branch="master" # 部署的生产环境使用的分支
+origin="origin" # 部署的生产仓库使用的origin
+branch="master" # 部署的生产仓库使用的分支
+project_name="${project_path##*/}"
 middle_store_root_path=$(dirname $(pwd)) # 裸仓库根目录
-produce_store_root_path="/www/wwwroot" # 生产环境根目录
-
+cur_work_path="${middle_store_root_path}/${project_name}" # TODO 将hooks脚本分离出去适合用到
+produce_store_root_path="/www/wwwroot" # 生产仓库根目录
 
 # 接受参数
 while getopts ":o:b:" opt
 do
-    case $opt in
-        o)
-  	      origin=$OPTARG;;
-        b)
-      	  branch=$OPTARG;;
-    esac
+        case $opt in
+            o)
+            origin=$OPTARG;;
+            b)
+            branch=$OPTARG;;
+        esac
 done
 
-
+# 输入项目名称
 while :
 do
-read -p "请输入项目名称,会自动添加.git结尾,输入exit可以退出：" item_name
-if [ "${item_name}"x == "exit"x ]
-then
-	exit 0
-fi
-cd $middle_store_root_path
-if [ -d "${item_name}.git" ]
- then
-    read -p "该项目已经存在，是否删除原有文件夹在进行创建？y/n：" input
-    if [ "${input}"x == "y"x ]
+    # 输入项目名称
+    read -p "请输入项目名称,会自动添加.git结尾,输入exit可以退出：" item_name
+    if [ "${item_name}"x == "exit"x ]
     then
-        rm -rf "${item_name}.git"
-        break
+        exit 0
     fi
- else
-	break
-fi
+    # 检测裸仓库
+    cd $middle_store_root_path
+    if [ -d "${item_name}.git" ]
+    then
+        read -p "该项目裸仓库已经存在，是否删除原有文件夹在进行创建？y/n：" input
+        if [ "${input}"x == "y"x ]
+        then
+            rm -rf "${item_name}.git"
+        else
+            continue
+        fi
+    fi
+    # 检测生产仓库
+    cd $produce_store_root_path
+    if [ -d $item_name ]
+    then
+        read -p "该项目生产仓库已经存在，是否删除原有文件夹在进行创建？y/n：" input 
+        if [ "${input}"x == "y"x ]
+        then
+            rm -rf $item_name
+            break
+        else
+            continue
+        fi
+    else
+        break    
+    fi
 done
 
 
@@ -60,9 +77,9 @@ chown $user:$group -R "${item_name}.git" # 修改裸仓库的所属用户
 echo "克隆生产仓库..."
 cd $produce_store_root_path
 git clone "${middle_store_root_path}/${item_name}.git" 
-chown $user:$group -R $item_name # 修改生产环境的所属用户
+chown $user:$group -R $item_name # 修改生产仓库的所属用户
 
-echo "写入自动化部署hook内容"
+echo "写入自动化部署钩子内容"
 produce_store_path="${produce_store_root_path}/${item_name}"
 hooks_path="${middle_store_root_path}/${item_name}.git/hooks/post-receive" 
 cat > $hooks_path <<EOF
@@ -76,12 +93,12 @@ cat > $hooks_path <<EOF
  then
     if [ -x $deploy_shell_path ]
     then
-        echo $deploy_shell_path
+        ${produce_store_path}/deploy.sh
     else
         echo '无法执行deploy.sh，因为该文件没有可执行权限'
     fi
  fi
- echo '生产环境更新完毕'
+ echo '生产仓库更新完毕'
 EOF
 echo "创建钩子于 ${hooks_path}"
 chown $user:$group $hooks_path # 修改钩子的所属用户
