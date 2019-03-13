@@ -88,15 +88,10 @@ cat > $hooks_path <<EOF
  cd $produce_store_path
  git pull $origin $branch
  # 执行部署脚本
- deploy_shell_path="${produce_store_path}/deploy.sh"
  if [ -d $deploy_shell_path ]
  then
-    if [ -x $deploy_shell_path ]
-    then
-        ${produce_store_path}/deploy.sh
-    else
-        echo '无法执行deploy.sh，因为该文件没有可执行权限'
-    fi
+    chmod u+x ${produce_store_path}/deploy.sh # 给予执行权限
+    ${produce_store_path}/deploy.sh
  fi
  echo '生产仓库更新完毕'
 EOF
