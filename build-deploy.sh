@@ -53,7 +53,7 @@ echo "创建裸仓库中..."
 cd $middle_store_root_path
 git init --bare "${item_name}.git"
 chown $user:$group -R $item_path # 修改裸仓库的所属用户
-
+hooks_dir_path="${middle_store_root_path}/${item_name}.git"
 
 echo "克隆生产仓库..."
 middle_store_path="${middle_store_root_path}/${item_name}.git"
@@ -61,12 +61,10 @@ cd $produce_store_root_path
 git clone $middle_store_path 
 chown $user:$group -R $produce_store_path # 修改生产环境的所属用户
 
-echo "创建钩子"
+
 hooks_path="${hooks_dir_path}/post-receive"
-if [ ! -f $hooks_path ]
-then
+echo "创建钩子于 ${hooks_path}"
 touch $hooks_path
-fi
 
 chown $user:$group $hooks_path # 修改钩子的所属用户
 chmod +x $hooks_path # 让钩子可以被执行
