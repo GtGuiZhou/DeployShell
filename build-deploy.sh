@@ -67,7 +67,7 @@ echo "创建钩子于 ${hooks_path}"
 touch $hooks_path
 
 chown $user:$group $hooks_path # 修改钩子的所属用户
-chmod +x $hooks_path # 让钩子可以被执行
+chmod u+x $hooks_path # 让钩子可以被执行
 
 echo "写入自动化部署hook内容"
 cat > $hooks_path <<EOF
