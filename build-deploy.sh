@@ -85,11 +85,13 @@ hooks_path="${middle_store_root_path}/${item_name}.git/hooks/post-receive"
 cat > $hooks_path <<EOF
  # 该环境变量会影响部分git命令的执行
  unset GIT_DIR
+ echo '开始更新生产环境的代码...'
  cd $produce_store_path
  git pull $origin $branch
  # 执行部署脚本
  if [ -d $deploy_shell_path ]
  then
+    echo '执行项目的部署脚本'
     chmod u+x ${produce_store_path}/deploy.sh # 给予执行权限
     ${produce_store_path}/deploy.sh
  fi
