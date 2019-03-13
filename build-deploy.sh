@@ -14,7 +14,7 @@ user="www"
 group="www"
 origin="origin" # 部署的生产环境使用的origin
 branch="master" # 部署的生产环境使用的分支
-middle_store_path=$(cd `dirname $0`; pwd)# 裸仓库根目录
+middle_store_path=$(dirname $(pwd)) # 裸仓库根目录
 produce_store_root_path="/www/wwwroot" # 生产环境根目录
 
 # 接受参数
