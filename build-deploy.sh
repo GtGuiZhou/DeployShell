@@ -1,3 +1,4 @@
+
 # 这个shell可以实现自动创建中转仓库和部署仓库
 # 1.创建中间仓库 
 #   让本地能够将代码上传到本仓库 
@@ -74,7 +75,7 @@ cd $middle_store_root_path
 git init --bare "${item_name}.git"
 chown $user:$group -R "${item_name}.git" # 修改裸仓库的所属用户
 
-echo "克隆生产仓库..."
+echo "克隆空的生产仓库..."
 cd $produce_store_root_path
 git clone "${middle_store_root_path}/${item_name}.git" 
 chown $user:$group -R $item_name # 修改生产仓库的所属用户
@@ -85,6 +86,10 @@ hooks_path="${middle_store_root_path}/${item_name}.git/hooks/post-receive"
 cat > $hooks_path <<EOF
  # 该环境变量会影响部分git命令的执行
  unset GIT_DIR
+
+ # 忽略文件的权限，否则后面更改deploy.sh的权限，会导致无法git pull，因为版本内容不一致。
+ git config core.filemode false
+
  echo '开始更新生产环境的代码...'
  cd $produce_store_path
  git pull $origin $branch
