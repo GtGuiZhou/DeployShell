@@ -87,6 +87,9 @@ cat > $hooks_path <<EOF
  # 该环境变量会影响部分git命令的执行
  unset GIT_DIR
 
+ # 获取生产环境所有文件的写权限，防止deploy.sh中更改了权限，导致无法更新情况
+ chmod u+w -R $produce_store_path
+
  # 忽略文件的权限，否则后面更改deploy.sh的权限，会导致无法git pull，因为版本内容不一致。
  git config core.filemode false
 
