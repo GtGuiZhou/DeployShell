@@ -90,11 +90,13 @@ cat > $hooks_path <<EOF
  # 获取生产环境所有文件的写权限，防止deploy.sh中更改了权限，导致无法更新情况
  chmod u+w -R $produce_store_path
 
- # 忽略文件的权限，否则后面更改deploy.sh的权限，会导致无法git pull，因为版本内容不一致。
+ # 进入生产环境目录
+ cd $produce_store_path
+
+ # 在生产环境目录下执行下面的命令，使得git忽略文件的权限，否则后面更改deploy.sh的权限，会导致无法git pull，因为版本内容不一致。
  git config core.filemode false
 
  echo '开始更新生产环境的代码...'
- cd $produce_store_path
  git pull $origin $branch
  # 执行部署脚本
  if [ -d $deploy_shell_path ]
